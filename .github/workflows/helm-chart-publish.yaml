@@ -4,7 +4,11 @@ on:
   push:
     branches:
       - main
-
+    paths-ignore:
+      - 'src/helm/**'
+      - 'src/requirements-dev.txt'
+      - 'README.md'
+      - '.github/**'
 jobs:
   release:
     permissions:

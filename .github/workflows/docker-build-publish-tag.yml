@@ -4,9 +4,10 @@ on:
   push:
     tags: [ 'v*.*.*' ]
     paths-ignore:
-      - 'src/helm/*'
+      - 'src/helm/**'
       - 'src/requirements-dev.txt'
       - 'README.md'
+      - '.github/**'
 
 env:
   REGISTRY: docker.io

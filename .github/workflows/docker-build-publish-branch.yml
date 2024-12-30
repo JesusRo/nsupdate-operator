@@ -4,9 +4,10 @@ on:
   push:
     branches: [ "develop", "main" ]
     paths-ignore:
-      - 'src/helm/*'
+      - 'src/helm/**'
       - 'src/requirements-dev.txt'
       - 'README.md'
+      - '.github/**'
 env:
   REGISTRY: docker.io
   IMAGE_NAME: ${{ github.repository }}
