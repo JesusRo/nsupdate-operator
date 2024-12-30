@@ -8,7 +8,7 @@ image:
 config:
   owner: "best-devops-team"
   master:  
-    server: "192.168.169.253"
+    server: "192.168.1.1"
     user: "environment."
     algorithm: "hmac-sha512"
     port: 6953

@@ -3,7 +3,10 @@ name: Docker Image CI
 on:
   push:
     branches: [ "develop", "main" ]
-
+    paths-ignore:
+      - 'src/helm/*'
+      - 'src/requirements-dev.txt'
+      - 'README.md'
 env:
   REGISTRY: docker.io
   IMAGE_NAME: ${{ github.repository }}

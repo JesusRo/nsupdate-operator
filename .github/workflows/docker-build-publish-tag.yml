@@ -3,6 +3,10 @@ name: Docker Image CI
 on:
   push:
     tags: [ 'v*.*.*' ]
+    paths-ignore:
+      - 'src/helm/*'
+      - 'src/requirements-dev.txt'
+      - 'README.md'
 
 env:
   REGISTRY: docker.io
