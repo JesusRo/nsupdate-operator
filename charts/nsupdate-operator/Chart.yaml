@@ -1,5 +1,7 @@
 apiVersion: v2
 version: 0.0.1
+kubeVersion: ">=1.28.0"
 type: application
 name: nsupdate-operator
 description: A Helm chart for NSUpdate Operator
+home: https://github.com/JesusRo/nsupdate-operator
