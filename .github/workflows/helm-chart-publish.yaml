@@ -34,6 +34,6 @@ jobs:
         with:
           skip_existing: true
           packages_with_index: true
-          pages_branch: main
+          pages_branch: gh-pages
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

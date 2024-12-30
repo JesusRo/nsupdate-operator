@@ -42,6 +42,13 @@ All this having some kind of guardrails as
 - limit DNS zones 
 - avoid interfering with entries not managed by this instance operator
 
+## Images
+Uploaded to https://hub.docker.com/r/jesusro/nsupdate-operator 
+
+## How to use this as a chart
+
+
+
 #### Development
 By default the operator tries to load the in-cluster credentials (service account usage).
 If you're running on local for development, set `MODE` to `DEV` and it will use kubeconfig (~/.kube/config or KUBECONFIG)
