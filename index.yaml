@@ -1,0 +1,15 @@
+apiVersion: v1
+entries:
+  nsupdate-operator:
+  - apiVersion: v2
+    created: "2024-12-30T17:08:28.716780047Z"
+    description: A Helm chart for NSUpdate Operator
+    digest: 59a89500acce57eac9b4c2239421a605e42a8ce5637126fae140c825167685b8
+    home: https://github.com/JesusRo/nsupdate-operator
+    kubeVersion: '>=1.28.0'
+    name: nsupdate-operator
+    type: application
+    urls:
+    - nsupdate-operator-0.0.1.tgz
+    version: 0.0.1
+generated: "2024-12-30T17:08:28.716809973Z"
