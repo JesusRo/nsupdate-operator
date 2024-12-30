@@ -1,0 +1,8 @@
+FROM python:3.13.1-alpine AS base
+RUN mkdir /app
+WORKDIR /install
+COPY requirements.txt /requirements.txt
+RUN pip install -r /requirements.txt
+COPY app /app
+WORKDIR /app
+CMD ["kopf", "run", "--liveness=http://0.0.0.0:8080/", "-A", "controller.py"]

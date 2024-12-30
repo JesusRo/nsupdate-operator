@@ -1,0 +1,6 @@
+kopf
+dnspython
+PyYAML
+# We should pick only one of these
+kubernetes
+kr8s

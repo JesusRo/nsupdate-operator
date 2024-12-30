@@ -1,0 +1,77 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: dnsrecords.stable.devopstools
+spec:
+  group: stable.devopstools
+  scope: Namespaced
+  names:
+    plural: dnsrecords
+    singular: dnsrecord
+    kind: DNSRecord
+    shortNames:
+      - dnsr
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              description: Specification of the DNSRecord resource.
+              properties:
+                record:
+                  type: string
+                  description: The DNS record name (e.g., "example.com").
+                type:
+                  type: string
+                  description: The type of DNS record (e.g., "CNAME", "A", "TXT").
+                  enum:
+                    - A
+                    - CNAME
+                target:
+                  type: string
+                  description: The target hostname or IP address for the DNS record.
+              required:
+                - record
+                - type
+                - target
+            status:
+              type: object
+              description: Status of synchronization with DNS servers.
+              properties:
+                state:
+                  type: string
+                  description: The synchronization state of the DNS record.
+                  enum:
+                    - Synced
+                    - Propagation
+                    - Pending
+                    - Error
+                    - Deleted
+                errorMessage:
+                  type: string
+                  description: Details of the last error encountered.
+                lastUpdated:
+                  type: string
+                  description: The timestamp of the last operator update.
+      additionalPrinterColumns:
+        - name: Record
+          type: string
+          description: The DNS record name.
+          jsonPath: .spec.record
+        - name: Type
+          type: string
+          description: The type of the DNS record.
+          jsonPath: .spec.type
+        - name: Target
+          type: string
+          description: The target of the DNS record.
+          jsonPath: .spec.target
+        - name: Status
+          type: string
+          description: The synchronization status of the DNS record.
+          jsonPath: .status.state

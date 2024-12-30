@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nsupdate-operator-dnsr
+  namespace: {{ .Values.namespace.name }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nsupdate-operator-dnsr
+  template:
+    metadata:
+      labels:
+        app: nsupdate-operator-dnsr
+    spec:
+      serviceAccountName: nsupdate-operator-account
+      containers:
+      - name: operator
+        image: {{ .Values.image.registry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        env:
+        - name: operator
+          value: "dnsr"
+        - name: KEY
+          valueFrom:
+            secretKeyRef:
+              name: nsupdate-operator-secret
+              key: KEY
+        - name: namespace
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+          - containerPort: 6969
+            name: admission
+          - containerPort: 8080
+            name: healthz
+        livenessProbe:
+          httpGet:
+            path: /
+            port: healthz
+        volumeMounts:
+          - mountPath: "/app/server-key.pem"
+            name: certs
+            subPath: key
+            readOnly: true
+          - mountPath: "/app/server.pem"
+            name: certs
+            subPath: server
+            readOnly: true
+      volumes:
+        - name: certs
+          secret:
+            secretName: nsupdate-operator-certs
+            items:
+            - key: server
+              path: server
+            - key: key
+              path: key
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nsupdate-operator-ingress
+  namespace: {{ .Values.namespace.name }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nsupdate-operator-ingress
+  template:
+    metadata:
+      labels:
+        app: nsupdate-operator-ingress
+    spec:
+      serviceAccountName: nsupdate-operator-account
+      containers:
+      - name: operator
+        image: {{ .Values.image.registry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        env:
+        - name: operator
+          value: "ingress"
+        - name: namespace
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+          - containerPort: 8080
+            name: healthz
+        livenessProbe:
+          httpGet:
+            path: /
+            port: healthz

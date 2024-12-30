@@ -1,0 +1,33 @@
+{{ if .Values.config.webhook.enabled -}}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: dnsrecords.stable.devopstools
+webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    caBundle: {{ .Values.config.webhook.ca }}
+    service:
+      name: admission
+      namespace: {{ .Values.namespace.name }}
+      path: /uniquerecord
+      port: 443
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: unique-record.dnsrecords.stable.devopstools
+  rules:
+  - apiGroups:
+    - stable.devopstools
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - dnsrecords
+    scope: '*'
+  sideEffects: None
+  timeoutSeconds: 30
+{{- end }} 

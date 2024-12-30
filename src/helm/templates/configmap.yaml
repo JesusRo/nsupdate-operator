@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nsupdate-operator-config
+  namespace: {{ .Values.namespace.name }}
+data:
+  master: |+ 
+    server: {{ if regexMatch "^([0-9]+\\.){3}[0-9]+$" .Values.config.master.server -}}
+        {{ .Values.config.master.server }}
+      {{- else }}
+        {{ getHostByName .Values.config.master.server }}
+      {{- end }}
+    signer: "{{ .Values.config.master.user }}"
+    algorithm: "{{ .Values.config.master.algorithm }}"
+    port: {{ .Values.config.master.port }}
+    key: PLACEHOLDERTOBEREMOVED
+    timeout: {{ .Values.config.master.timeout }}
+    owner: "{{ tpl .Values.config.owner $ }}"
+  standards: |+
+  {{- range .Values.config.standards }} 
+    - key: {{ tpl .key $ }}
+      type: {{ tpl .type $ }}
+      target: {{ tpl .target $ }}
+  {{- end }}
+  zones: |+
+  {{- range .Values.config.zones }} 
+    - {{ tpl . $}}
+  {{- end }}
