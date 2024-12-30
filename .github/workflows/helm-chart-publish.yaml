@@ -9,6 +9,7 @@ on:
       - 'src/requirements-dev.txt'
       - 'README.md'
       - '.github/**'
+      - 'index.yaml'
 jobs:
   release:
     permissions:
