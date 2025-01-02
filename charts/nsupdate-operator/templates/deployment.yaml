@@ -41,6 +41,10 @@ spec:
           httpGet:
             path: /
             port: healthz
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 2
 {{- if .Values.config.webhook.enabled }}
 ---
 apiVersion: apps/v1
@@ -87,6 +91,10 @@ spec:
           httpGet:
             path: /
             port: healthz
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 2
         volumeMounts:
           - mountPath: "/app/server-key.pem"
             name: certs
@@ -145,4 +153,8 @@ spec:
           httpGet:
             path: /
             port: healthz
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 2
 {{- end }}
