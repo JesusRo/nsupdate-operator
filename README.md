@@ -58,7 +58,7 @@ If you're running on local for development, set `MODE` to `DEV` and it will use 
 ```bash
 ┌──────────────────────────>
 │nsupdate-operator/src on  main via 🐍 v3.12.3 (nsupdate-operator) took 4s 
-└──➜  KEY="myPLAINkey" MODE=DEV kopf run controller.py
+└──➜  namespace="nsupdate-operator" KEY="mypassword" MODE=DEV kopf run -A controller.py
 ```
 #### Webhook development
 You need to somehow make posible kubeapi to call your localhost

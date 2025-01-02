@@ -1,6 +1,3 @@
-##TODO a lot of things
-# Manage exceptions and logging also pending
-
 # This only watchs for annotated ingresses and create corresponding dnsr resources
 
 import kopf
@@ -73,10 +70,7 @@ async def sync_dns_record(dnsr, resource_name, namespace, desired_spec, logger):
                 raise kopf.TemporaryError(f"Error creating DNSRecord {resource_name}: {e}", delay=10)
         else:
             # Log any other errors
-            logger.error(
-                f"Error handling DNSRecord {resource_name}: {e.reason} - {e.body}"
-                
-            )
+            logger.error(f"Error handling DNSRecord {resource_name}: {e.reason} - {e.body}")
             raise kopf.TemporaryError(f"Error handling DNSRecord {resource_name}: {e.reason} - {e.body}", delay=10)
     return False
 
@@ -103,12 +97,15 @@ async def ingress_matched(body, logger, **kwargs):
     for standard in standards:
         if standard["key"] == ingress.annotations[f"nsupdate-operator"]:
             target=standard["target"] 
-            record_type=standard["type"] 
+            record_type=standard["type"]
+            break
 
+    # Fail if key is not present on the standards
     if target == "" or record_type=="":
         raise kopf.PermanentError(f"No standard founds for {ingress.metadata.name} ingress")
         return
     
+    # Create a dnsr resource per host rule on the ingress
     for rule in ingress.spec.rules:
         resource_name = f"{ingress.metadata.name}--{rule.host}"
         desired_dnsr = create_dns_record_spec(resource_name, ingress.metadata.namespace, rule.host, target, record_type)
