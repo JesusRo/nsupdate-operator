@@ -3,6 +3,9 @@ import kopf
 from kubernetes.dynamic import DynamicClient
 import kubernetes.client
 
+# Constants
+CDR="DNSRecord"
+
 # Validating Admission Webhook
 @kopf.on.validate(CDR, operations=["CREATE", "UPDATE"], persistent=True)
 async def uniquerecord(spec, **_):
