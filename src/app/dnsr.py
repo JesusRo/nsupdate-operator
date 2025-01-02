@@ -1,6 +1,6 @@
 ##TODO learn a bit to avoid this mess
-# Manage exceptions and self.logger also pending
-
+# TODO decide if we want to trigguer by timer
+# in case something external touched our records
 # Here is where the dirty stuffs happen
 # This manages the dnsr crds and actions agains dns master
 
@@ -133,26 +133,15 @@ def update_status(patch, state, error_message=None):
         'lastUpdated': datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
         'errorMessage': error_message
     })
-
+  
 @kopf.on.delete(kind=CDR)
-async def dnsr_deleted(spec, patch, logger, **_):
+async def dnsr_deleted(spec, logger, **_):
     dnsr = DnsRecord(record=spec.get("record"), record_type=spec.get("type"), status=Statuses.DELETED, logger=logger)
-    
-    if not dnsr.owned():
-        update_status(patch, Statuses.DELETED,f"Record {dnsr.record} is not managed by this by this operator")
-        return True
-
-    if not dnsr.sync():
-        patch.status['errorMessage'] = "Error sending delete request"
-        raise kopf.PermanentError(f"Error sending delete request")
-
-    if not dnsr.synced():
-        patch.status['errorMessage'] = "Deletion has not been synced yet"
-        raise kopf.TemporaryError(f"Error deleting dns record", delay=10)
-
-    if not dnsr.propagated():
-        patch.status['errorMessage'] = "Deletion has not been propagated yet"
-        raise kopf.TemporaryError(f"Error deleting dns record", delay=10)
+    return True if not dnsr.owned()       
+    raise kopf.PermanentError(f"Error sending delete request") if not dnsr.sync()
+    raise kopf.TemporaryError(f"Error deleting dns record", delay=10) if not dnsr.synced()
+    raise kopf.TemporaryError(f"Error deleting dns record, changes are not propagated yet", delay=10) if not dnsr.propagated()
+    return
 
 @kopf.on.update(kind=CDR)
 async def dnsr_updated(old, new, patch, logger, **_):
@@ -199,17 +188,3 @@ async def dnsr_created(spec, patch, logger, **_):
         if not dnsr.propagated():
             raise kopf.TemporaryError(f"Propagation not completed", delay=10)
         update_status(patch, Statuses.SYNCED, f"N/A")
-
-
-# Validating Admission Webhook
-@kopf.on.validate(CDR, operations=["CREATE", "UPDATE"], persistent=True)
-async def uniquerecord(spec, **_):
-    dyn_client = DynamicClient(kubernetes.client.ApiClient())
-    all_dnsr = dyn_client.resources.get(kind=CDR).get()
-    for dnsr in all_dnsr.attributes.items:
-        if (dnsr.spec.record.rstrip(".") == spec.get("record").rstrip(".")) and (spec._src.get("metadata")["name"] != dnsr.get("metadata")["name"]):
-            raise kopf.AdmissionError(f"Record must be unique. This record {spec.get('record')} is already being managed by {dnsr.metadata.namespace}/{dnsr.metadata.name}.", code=409)
-
-
-# TODO decide if we want to trigguer by timer
-# in case something external touched our records

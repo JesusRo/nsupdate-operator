@@ -11,5 +11,5 @@ spec:
     protocol: TCP
     targetPort: admission
   selector:
-    app: nsupdate-operator-dnsr
+    app: nsupdate-operator-dnsr-webhook
 {{- end }}

@@ -77,8 +77,10 @@ src/app/
 ```
 **controller.py**: Entry point of the operator, some kopf configuration, DEV mode management and import of everything dnsr/ingress files
 **config.py**: Prepare and export configuration from configmap
-**dnsr.py**: Manages dnsr resources, including webhooks
+**dnsr.py**: Manages dnsr resources and work agains dns master
+**dnsr-webhook.py**: Manages validation webhook for dnsr resources
 **ingress.py**: Watchs ingress resources and creates/delete/update dnsr resources as needed
+Reason to split in 3 containers is to avoid interlocks between workflows as kopf is single threaded
 
 ## How to use this as a chart
 Simply deploy to your environment

@@ -40,8 +40,12 @@ async def configure(settings: kopf.OperatorSettings, logger, **_):
         logger.info(f"Enabled dnsr operator")
         settings.admission.server = kopf.WebhookServer(certfile='server.pem', pkeyfile='server-key.pem', port=6969)
         import dnsr
+    elif operator=="dnsr-webhook":
+        logger.info(f"Enabled dnsr webhook validator")
+        settings.admission.server = kopf.WebhookServer(certfile='server.pem', pkeyfile='server-key.pem', port=6969)
+        import webhook.py
     elif operator=="ingress":
-        logger.info(f"Enabled ingress operator")
+        logger.info(f"Enabled ingress watcher")
         import ingress 
     else:
         logger.error("'operator' env var is not valid for production, provide 'dnsr' or 'ingress' value")

@@ -51,7 +51,6 @@ spec:
                     - Propagation
                     - Pending
                     - Error
-                    - Deleted
                 errorMessage:
                   type: string
                   description: Details of the last error encountered.
