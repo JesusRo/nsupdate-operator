@@ -34,8 +34,10 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         ports:
+        {{- if .Values.config.webhook.enabled -}}
           - containerPort: 6969
             name: admission
+        {{- end }}  
           - containerPort: 8080
             name: healthz
         livenessProbe:
@@ -60,6 +62,7 @@ spec:
               path: server
             - key: key
               path: key
+{{- if .Values.config.dnsrFromIngress }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -98,3 +101,4 @@ spec:
           httpGet:
             path: /
             port: healthz
+{{- end }}

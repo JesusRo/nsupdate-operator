@@ -13,7 +13,6 @@ data:
     signer: "{{ .Values.config.master.user }}"
     algorithm: "{{ .Values.config.master.algorithm }}"
     port: {{ .Values.config.master.port }}
-    key: PLACEHOLDERTOBEREMOVED
     timeout: {{ .Values.config.master.timeout }}
     owner: "{{ tpl .Values.config.owner $ }}"
   standards: |+

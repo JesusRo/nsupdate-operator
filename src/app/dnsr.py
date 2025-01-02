@@ -21,7 +21,7 @@ from dataclasses import dataclass
 import time
 
 # Constants
-KEY = os.environ.get('KEY',yaml.safe_load(str(master[f"key"])))
+KEY = os.environ.get('KEY')
 SERVER = str(master[f"server"])
 ALGORITHM = str(master[f"algorithm"])
 KEYRING = dns.tsigkeyring.from_text({master[f"signer"]: KEY})

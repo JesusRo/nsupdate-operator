@@ -46,7 +46,10 @@ All this having some kind of guardrails as
 Uploaded to https://hub.docker.com/r/jesusro/nsupdate-operator 
 
 ## How to use this as a chart
-
+Simply deploy to your environment
+```bash
+helm install -f myvalues.yaml nsupdate-operatpr ./charts/nsupdate-operator
+```
 
 
 #### Development
@@ -69,8 +72,37 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: nsupdate-operator-secret
-  namespace: nsupdate-operator-system
+  namespace: nsupdate-operator
 stringData:
   KEY: myPLAINpasswordhere
+type: Opaque
+```
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nsupdate-operator-certs
+  namespace: nsupdate-operator
+stringData:
+  key: |
+    -----BEGIN RSA PRIVATE KEY-----
+    MIIEpAIBAAKCAQEAv5s+hkZ3uMzxnSs+cq21rLQlkce325VUjiLGbT+fUBXQ6OPJ
+    gclfGifzIQ/iSmWUpKiXi2rzCO9XsxtAKztaryYPm7YU66HazUo3JctE5RHhS1oh
+    [...]
+    [...]
+    [...]
+    993CFkGCidnkZWdO5B+t6nDm2zMJZKRPkEe0nJ+TDmR5drODjfjWfY/41w/5hyTM
+    WCNJ9cpReodB8xl3PBUy7iyTdr6LRj37foAQJaEeVWoM17Dozd5ncg==
+    -----END RSA PRIVATE KEY-----
+  server: |
+    -----BEGIN CERTIFICATE-----
+    MIIEBzCCAu+gAwIBAgIUPqgee+GyEYPllI2c6WfdqwTiKmAwDQYJKoZIhvcNAQEL
+    BQAwZDENMAsGA1UEBhMETm9uZTENMAsGA1UECBMETm9uZTENMAsGA1UEBxMETm9u
+    [...]
+    [...]
+    [...]
+    5edvzLf2esormHLqp/FqttzbqZpwvSECoUMw8HMhUe17tEvxwdQQiJCSS061bAcz
+    6l2K0FUDnj03AjuAqgxTjuL84DXCl4Dsyxpu
+    -----END CERTIFICATE-----
 type: Opaque
 ```

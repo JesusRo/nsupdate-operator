@@ -1,3 +1,4 @@
+{{ if .Values.config.webhook.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,3 +12,4 @@ spec:
     targetPort: admission
   selector:
     app: nsupdate-operator-dnsr
+{{- end }}

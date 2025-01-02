@@ -36,7 +36,6 @@ except ApiException as e:
         master = yaml.safe_load("""
             server: "127.0.0.1"
             signer: "root"
-            key: "VW5hdXRoZW50aWNhdGVkCg=="
             port: 53
             algorithm: "hmac-sha256"
             timeout: 5
