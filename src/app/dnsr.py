@@ -137,11 +137,10 @@ def update_status(patch, state, error_message=None):
 @kopf.on.delete(kind=CDR)
 async def dnsr_deleted(spec, logger, **_):
     dnsr = DnsRecord(record=spec.get("record"), record_type=spec.get("type"), status=Statuses.DELETED, logger=logger)
-    return True if not dnsr.owned()       
-    raise kopf.PermanentError(f"Error sending delete request") if not dnsr.sync()
-    raise kopf.TemporaryError(f"Error deleting dns record", delay=10) if not dnsr.synced()
-    raise kopf.TemporaryError(f"Error deleting dns record, changes are not propagated yet", delay=10) if not dnsr.propagated()
-    return
+    if not dnsr.owned(): return True 
+    if not dnsr.sync(): raise kopf.PermanentError(f"Error sending delete request")
+    if not dnsr.synced(): raise kopf.TemporaryError(f"Error deleting dns record", delay=10) 
+    if not dnsr.propagated(): raise kopf.TemporaryError(f"Error deleting dns record, changes are not propagated yet", delay=10)
 
 @kopf.on.update(kind=CDR)
 async def dnsr_updated(old, new, patch, logger, **_):
