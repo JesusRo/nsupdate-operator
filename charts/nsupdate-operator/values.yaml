@@ -4,7 +4,7 @@ namespace:
 image: # Self explanatory
   registry: docker.io
   name: jesusro/nsupdate-operator
-  tag: main-20241230145132
+  tag: v0.0.1-alpha
 config: # Application's config
   owner: "best-devops-team" # Used to flag dns entries ownership on a TXT record associated
   master: # DNS master configuration to send NSUPDATE requests
