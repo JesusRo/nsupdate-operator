@@ -38,12 +38,11 @@ async def configure(settings: kopf.OperatorSettings, logger, **_):
     # Take a look on the deployment of this in the helm chart
     elif operator=="dnsr":
         logger.info(f"Enabled dnsr operator")
-        settings.admission.server = kopf.WebhookServer(certfile='server.pem', pkeyfile='server-key.pem', port=6969)
         import dnsr
     elif operator=="dnsr-webhook":
         logger.info(f"Enabled dnsr webhook validator")
         settings.admission.server = kopf.WebhookServer(certfile='server.pem', pkeyfile='server-key.pem', port=6969)
-        import webhook.py
+        import webhook
     elif operator=="ingress":
         logger.info(f"Enabled ingress watcher")
         import ingress 
