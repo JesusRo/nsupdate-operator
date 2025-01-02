@@ -44,6 +44,11 @@ rules:
       - list
       - watch
   # Application: access for watching ingress and managing crds cluster-wide.
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    verbs:
+      - list
+      - watch
   - apiGroups: [stable.devopstools]
     resources: [dnsrecords]
     verbs:
