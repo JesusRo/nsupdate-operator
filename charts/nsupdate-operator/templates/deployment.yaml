@@ -38,13 +38,12 @@ spec:
           - containerPort: 8080
             name: healthz
         livenessProbe:
-          httpGet:
-            path: /
-            port: healthz
           initialDelaySeconds: 5
           timeoutSeconds: 5
           failureThreshold: 3
-          successThreshold: 2
+          httpGet:
+            path: /
+            port: healthz
 {{- if .Values.config.webhook.enabled }}
 ---
 apiVersion: apps/v1
@@ -88,13 +87,12 @@ spec:
           - containerPort: 8080
             name: healthz
         livenessProbe:
-          httpGet:
-            path: /
-            port: healthz
           initialDelaySeconds: 5
           timeoutSeconds: 5
           failureThreshold: 3
-          successThreshold: 2
+          httpGet:
+            path: /
+            port: healthz
         volumeMounts:
           - mountPath: "/app/server-key.pem"
             name: certs
@@ -150,11 +148,10 @@ spec:
           - containerPort: 8080
             name: healthz
         livenessProbe:
-          httpGet:
-            path: /
-            port: healthz
           initialDelaySeconds: 5
           timeoutSeconds: 5
           failureThreshold: 3
-          successThreshold: 2
+          httpGet:
+            path: /
+            port: healthz
 {{- end }}
