@@ -34,10 +34,10 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         ports:
-        {{- if .Values.config.webhook.enabled -}}
+          {{- if and .Values.config.webhook.enabled }} 
           - containerPort: 6969
             name: admission
-        {{- end }}  
+          {{- end }}  
           - containerPort: 8080
             name: healthz
         livenessProbe:
