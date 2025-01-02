@@ -45,6 +45,41 @@ All this having some kind of guardrails as
 ## Images
 Uploaded to https://hub.docker.com/r/jesusro/nsupdate-operator 
 
+## Folder structure
+```bash
+.
+├── charts
+│   └── nsupdate-operator
+│       ├── Chart.yaml
+│       ├── templates
+│       └── values.yaml
+├── LICENSE
+├── README.md
+└── src
+    ├── app
+    ├── Dockerfile
+    ├── requirements-dev.txt
+    └── requirements.txt
+```
+- **charts**: holds helm chart for this app
+- **src**: actualy code
+  - **app**: actual python code
+  - **Dockerfile**: for building the image
+  - **requirements**-dev.txt: for local development (virtualenv recomended)
+  - **requirements**.txt: for image building
+
+```bash
+src/app/
+├── config.py
+├── controller.py
+├── dnsr.py
+└── ingress.py
+```
+**controller.py**: Entry point of the operator, some kopf configuration, DEV mode management and import of everything dnsr/ingress files
+**config.py**: Prepare and export configuration from configmap
+**dnsr.py**: Manages dnsr resources, including webhooks
+**ingress.py**: Watchs ingress resources and creates/delete/update dnsr resources as needed
+
 ## How to use this as a chart
 Simply deploy to your environment
 ```bash
