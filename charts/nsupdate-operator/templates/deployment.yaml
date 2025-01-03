@@ -44,6 +44,8 @@ spec:
           httpGet:
             path: /
             port: healthz
+        resources:
+          {{- .Values.resources | toYaml | nindent 10}}
 {{- if .Values.config.webhook.enabled }}
 ---
 apiVersion: apps/v1
@@ -93,6 +95,8 @@ spec:
           httpGet:
             path: /
             port: healthz
+        resources:
+          {{- .Values.resources | toYaml | nindent 10}}
         volumeMounts:
           - mountPath: "/app/server-key.pem"
             name: certs
@@ -154,4 +158,6 @@ spec:
           httpGet:
             path: /
             port: healthz
+        resources:
+          {{- .Values.resources | toYaml | nindent 10}}
 {{- end }}

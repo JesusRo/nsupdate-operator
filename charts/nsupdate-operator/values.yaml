@@ -5,6 +5,12 @@ image: # Self explanatory
   registry: docker.io
   name: jesusro/nsupdate-operator
   tag: v0.0.1-alpha
+resources: # Per deployment
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
 config: # Application's config
   owner: "best-devops-team" # Used to flag dns entries ownership on a TXT record associated
   master: # DNS master configuration to send NSUPDATE requests

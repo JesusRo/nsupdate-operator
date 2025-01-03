@@ -145,7 +145,7 @@ async def dnsr_deleted(spec, logger, **_):
 @kopf.on.update(kind=CDR)
 async def dnsr_updated(old, new, patch, logger, **_):
     update_status(patch, Statuses.PENDING,f"N/A")
-    await dnsr_deleted(spec=old["spec"], patch=patch, logger=logger)
+    await dnsr_deleted(spec=old["spec"], logger=logger)
     await dnsr_created(spec=new["spec"], patch=patch, logger=logger)
 
 @kopf.on.resume(kind=CDR)
