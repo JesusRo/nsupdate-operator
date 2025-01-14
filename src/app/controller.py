@@ -4,7 +4,7 @@ import logging
 
 # TODO Implement more meaningful livenessprobe
 @kopf.on.probe()
-def get_current_timestamp(**kwargs):
+def get_current_timestamp(**_):
     pass
 
 @kopf.on.startup()
@@ -34,9 +34,14 @@ async def configure(settings: kopf.OperatorSettings, **_):
     # On production, first hack, we want diferent containers for each resource observed to avoid interlocks
     # Take a look on the deployment of this in the helm chart
     elif operator=="dnsr":
-        settings.admission.server = kopf.WebhookServer(certfile='server.pem', pkeyfile='server-key.pem', port=6969)
+        logging.info(f"Enabled dnsr operator")
         import dnsr
+    elif operator=="dnsr-webhook":
+        logging.info(f"Enabled dnsr webhook validator")
+        settings.admission.server = kopf.WebhookServer(certfile='server.pem', pkeyfile='server-key.pem', port=6969)
+        import webhook
     elif operator=="ingress":
+        logging.info(f"Enabled ingress operator")
         import ingress 
     else:
         logging.error(f"'operator' env var is not valid for production, provide 'dnsr' or 'ingress' value")

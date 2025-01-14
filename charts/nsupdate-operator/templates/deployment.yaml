@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -34,16 +35,68 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         ports:
-          {{- if and .Values.config.webhook.enabled }} 
-          - containerPort: 6969
-            name: admission
-          {{- end }}  
           - containerPort: 8080
             name: healthz
         livenessProbe:
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
           httpGet:
             path: /
             port: healthz
+        resources:
+          {{- .Values.resources | toYaml | nindent 10}}
+{{- if .Values.config.webhook.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nsupdate-operator-dnsr-webhook
+  namespace: {{ .Values.namespace.name }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nsupdate-operator-dnsr-webhook
+  template:
+    metadata:
+      labels:
+        app: nsupdate-operator-dnsr-webhook
+    spec:
+      serviceAccountName: nsupdate-operator-account
+      containers:
+      - name: operator
+        image: {{ .Values.image.registry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+        env:
+        - name: operator
+          value: "dnsr-webhook"
+        - name: KEY
+          valueFrom:
+            secretKeyRef:
+              name: nsupdate-operator-secret
+              key: KEY
+        - name: namespace
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+          - containerPort: 6969
+            name: admission
+          - containerPort: 8080
+            name: healthz
+        livenessProbe:
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: healthz
+        resources:
+          {{- .Values.resources | toYaml | nindent 10}}
         volumeMounts:
           - mountPath: "/app/server-key.pem"
             name: certs
@@ -62,6 +115,7 @@ spec:
               path: server
             - key: key
               path: key
+{{- end }}
 {{- if .Values.config.dnsrFromIngress }}
 ---
 apiVersion: apps/v1
@@ -98,7 +152,12 @@ spec:
           - containerPort: 8080
             name: healthz
         livenessProbe:
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
           httpGet:
             path: /
             port: healthz
+        resources:
+          {{- .Values.resources | toYaml | nindent 10}}
 {{- end }}

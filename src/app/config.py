@@ -44,10 +44,7 @@ except ApiException as e:
         )
     else:
         # Log any other errors
-        logging.error(
-            f"Error handling configuration {configmap_name}: {e.reason} - {e.body}"
-        )
-except as e:
+        logging.error(f"Error handling configuration {configmap_name}: {e.reason} - {e.body}")
+except e:
     logging.error(f"Fatal error handling configuration: {e}")
-    exit
     

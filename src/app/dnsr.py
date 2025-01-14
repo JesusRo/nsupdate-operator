@@ -1,11 +1,10 @@
 ##TODO learn a bit to avoid this mess
-# Manage exceptions and logging also pending
-
+# TODO decide if we want to trigguer by timer
+# in case something external touched our records
 # Here is where the dirty stuffs happen
 # This manages the dnsr crds and actions agains dns master
 
 import kopf
-import logging
 import dns.update
 import dns.query
 import dns.tsigkeyring
@@ -49,6 +48,7 @@ class DnsRecord:
     target: str = "0.0.0.0"
     record_type: Records = Records.A
     status: Statuses = Statuses.PENDING
+    logger: any = None
 
     def _starget(self) -> str:
         return self.target.rstrip(".") + "." if self.record_type == Records.CNAME else self.target
@@ -68,7 +68,7 @@ class DnsRecord:
                 resolver.timeout = TIMEOUT
                 resolver.resolve(self._starget())
             except Exception as e:
-                logging.warning(f"Error resolving {self._starget}: {e}")
+                self.logger.warning(f"Error resolving {self._starget}: {e}")
                 return False
         else:
             pattern = re.compile(r"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$")
@@ -86,7 +86,7 @@ class DnsRecord:
             response = resolver.resolve(self.record.rstrip("."), record_type)
             return str(response[0])
         except Exception as e:
-            logging.warning(f"Error resolving {self.record.rstrip(".")}: {e}")
+            self.logger.warning(f"Error resolving {self.record.rstrip(".")}: {e}")
             return False
 
     def owned(self) -> bool:
@@ -98,7 +98,7 @@ class DnsRecord:
             response = resolver.resolve("owner_"+self.record.rstrip("."), Records.TXT)
             return str(response[0] == OWNMARK)
         except Exception as e:
-            logging.warning(f"Error resolving TXT for {self.record.rstrip(".")}: {e}")
+            self.logger.warning(f"Error resolving TXT for {self.record.rstrip(".")}: {e}")
             return False
 
     def synced(self) -> bool:
@@ -124,7 +124,7 @@ class DnsRecord:
             time.sleep(TIMEOUT)
             return True
         except Exception as e:
-            logging.warning(f"Error syncing record {self.record} with target {target}: {e}")
+            self.logger.warning(f"Error syncing record {self.record} with target {target}: {e}")
             return False
 
 def update_status(patch, state, error_message=None):
@@ -133,37 +133,25 @@ def update_status(patch, state, error_message=None):
         'lastUpdated': datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
         'errorMessage': error_message
     })
-
+  
 @kopf.on.delete(kind=CDR)
-async def dnsr_deleted(spec, patch, **kwargs):
-    dnsr = DnsRecord(record=spec.get("record"), record_type=spec.get("type"), status=Statuses.DELETED)
-    
-    if not dnsr.owned():
-        update_status(patch, Statuses.DELETED,f"Record {dnsr.record} is not managed by this by this operator")
-        return True
-
-    if not dnsr.sync():
-        patch.status['errorMessage'] = "Error sending delete request"
-        raise kopf.PermanentError(f"Error sending delete request")
-
-    if not dnsr.synced():
-        patch.status['errorMessage'] = "Deletion has not been synced yet"
-        raise kopf.TemporaryError(f"Error deleting dns record", delay=10)
-
-    if not dnsr.propagated():
-        patch.status['errorMessage'] = "Deletion has not been propagated yet"
-        raise kopf.TemporaryError(f"Error deleting dns record", delay=10)
+async def dnsr_deleted(spec, logger, **_):
+    dnsr = DnsRecord(record=spec.get("record"), record_type=spec.get("type"), status=Statuses.DELETED, logger=logger)
+    if not dnsr.owned(): return True 
+    if not dnsr.sync(): raise kopf.PermanentError(f"Error sending delete request")
+    if not dnsr.synced(): raise kopf.TemporaryError(f"Error deleting dns record", delay=10) 
+    if not dnsr.propagated(): raise kopf.TemporaryError(f"Error deleting dns record, changes are not propagated yet", delay=10)
 
 @kopf.on.update(kind=CDR)
-async def dnsr_updated(old, new, patch, **_):
+async def dnsr_updated(old, new, patch, logger, **_):
     update_status(patch, Statuses.PENDING,f"N/A")
-    await dnsr_deleted(spec=old["spec"], patch=patch)
-    await dnsr_created(spec=new["spec"], patch=patch)
+    await dnsr_deleted(spec=old["spec"], logger=logger)
+    await dnsr_created(spec=new["spec"], patch=patch, logger=logger)
 
 @kopf.on.resume(kind=CDR)
 @kopf.on.create(kind=CDR)
-async def dnsr_created(spec, patch, **kwargs):
-    dnsr = DnsRecord(record=spec.get("record"), record_type=spec.get("type"), target=spec.get("target"))
+async def dnsr_created(spec, patch, logger, **_):
+    dnsr = DnsRecord(record=spec.get("record"), record_type=spec.get("type"), target=spec.get("target"), logger=logger)
     update_status(patch, Statuses.PENDING)
 
     if not dnsr.validate_zone():
@@ -199,17 +187,3 @@ async def dnsr_created(spec, patch, **kwargs):
         if not dnsr.propagated():
             raise kopf.TemporaryError(f"Propagation not completed", delay=10)
         update_status(patch, Statuses.SYNCED, f"N/A")
-
-
-# Validating Admission Webhook
-@kopf.on.validate(CDR, operations=["CREATE", "UPDATE"], persistent=True)
-async def uniquerecord(spec, **_):
-    dyn_client = DynamicClient(kubernetes.client.ApiClient())
-    all_dnsr = dyn_client.resources.get(kind=CDR).get()
-    for dnsr in all_dnsr.attributes.items:
-        if (dnsr.spec.record.rstrip(".") == spec.get("record").rstrip(".")) and (spec._src.get("metadata")["name"] != dnsr.get("metadata")["name"]):
-            raise kopf.AdmissionError(f"Record must be unique. This record {spec.get('record')} is already being managed by {dnsr.metadata.namespace}/{dnsr.metadata.name}.", code=409)
-
-
-# TODO decide if we want to trigguer by timer
-# in case something external touched our records
