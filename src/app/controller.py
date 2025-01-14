@@ -1,5 +1,6 @@
 import kopf
 import os
+import logging
 
 # TODO Implement more meaningful livenessprobe
 @kopf.on.probe()
@@ -7,7 +8,7 @@ def get_current_timestamp(**_):
     pass
 
 @kopf.on.startup()
-async def configure(settings: kopf.OperatorSettings, logger, **_):
+async def configure(settings: kopf.OperatorSettings, **_):
 
     settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(
         prefix="nsupdate-operator"
@@ -24,28 +25,24 @@ async def configure(settings: kopf.OperatorSettings, logger, **_):
     import config
     operator=os.environ.get('operator',"")
 
-    # For development, we run own webhookserver with webhook automanaged by kopf, how to route k8s master to your local is up to you
-    if os.environ.get('MODE',"") != "":
-        logger.warning(f"Entering development mode. Both dnsr and ingress are being managed together")
-        if os.environ.get('MODE') == "WEBHOOK":
-            logger.warning(f"Enabled local development webhooks")
-            settings.admission.server = kopf.WebhookServer(port=6969)
-            settings.admission.managed = 'dnsrecords.stable.devopstools'
+    # For development, we run our own webhookserver with webhook automanaged by kopf, how to route k8s master to your local is up to you
+    if os.environ.get('MODE',"") == "DEV":
+        settings.admission.server = kopf.WebhookServer(port=6969)
+        settings.admission.managed = 'dnsrecords.stable.devopstools'
         import dnsr
         import ingress
-        
     # On production, first hack, we want diferent containers for each resource observed to avoid interlocks
     # Take a look on the deployment of this in the helm chart
     elif operator=="dnsr":
-        logger.info(f"Enabled dnsr operator")
+        logging.info(f"Enabled dnsr operator")
         import dnsr
     elif operator=="dnsr-webhook":
-        logger.info(f"Enabled dnsr webhook validator")
+        logging.info(f"Enabled dnsr webhook validator")
         settings.admission.server = kopf.WebhookServer(certfile='server.pem', pkeyfile='server-key.pem', port=6969)
         import webhook
     elif operator=="ingress":
-        logger.info(f"Enabled ingress watcher")
+        logging.info(f"Enabled ingress operator")
         import ingress 
     else:
-        logger.error("'operator' env var is not valid for production, provide 'dnsr' or 'ingress' value")
+        logging.error(f"'operator' env var is not valid for production, provide 'dnsr' or 'ingress' value")
         exit
