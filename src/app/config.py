@@ -25,11 +25,11 @@ try:
     configuration = configmap.get(name=configmap_name,namespace=namespace)
     zones = yaml.safe_load(str(configuration.data["zones"]))
     standards = yaml.safe_load(str(configuration.data["standards"]))
-    master = os.environ.get('master',yaml.safe_load(str(configuration.data["master"])))
+    master = yaml.safe_load(str(configuration.data["master"]))
     logging.info(f"Configuration loaded from {configmap_name} configmap, env vars may still override these values.")
 except ApiException as e:
     if e.status == 404:
-        logging.info(f"ConfigMap for configuration named {configmap_name} not found. ")
+        logging.warning(f"ConfigMap for configuration named {configmap_name} not found. ")
         logging.info(f"We will continue with default configuration")
         zones = ["internal"]
         standards = []
@@ -47,7 +47,7 @@ except ApiException as e:
         logging.error(
             f"Error handling configuration {configmap_name}: {e.reason} - {e.body}"
         )
-except:
-    logging.error(f"Fatal error handling configuration")
+except as e:
+    logging.error(f"Fatal error handling configuration: {e}")
     exit
     

@@ -25,7 +25,7 @@ async def configure(settings: kopf.OperatorSettings, **_):
     import config
     operator=os.environ.get('operator',"")
 
-    # For development, we run own webhookserver with webhook automanaged by kopf, how to route k8s master to your local is up to you
+    # For development, we run our own webhookserver with webhook automanaged by kopf, how to route k8s master to your local is up to you
     if os.environ.get('MODE',"") == "DEV":
         settings.admission.server = kopf.WebhookServer(port=6969)
         settings.admission.managed = 'dnsrecords.stable.devopstools'
@@ -39,5 +39,5 @@ async def configure(settings: kopf.OperatorSettings, **_):
     elif operator=="ingress":
         import ingress 
     else:
-        logging.error("'operator' env var is not valid for production, provide 'dnsr' or 'ingress' value")
+        logging.error(f"'operator' env var is not valid for production, provide 'dnsr' or 'ingress' value")
         exit

@@ -16,7 +16,6 @@ DNS_RECORD_KIND = "DNSRecord"
 
 # Functions 
 def create_dns_record_spec(resource_name, namespace, host, target, type):
-
     return {
         "apiVersion": DNS_RECORD_API_VERSION,
         "kind": DNS_RECORD_KIND,
@@ -33,35 +32,37 @@ def create_dns_record_spec(resource_name, namespace, host, target, type):
 
 
 async def sync_dns_record(dnsr, resource_name, namespace, desired_spec, logger):
-
     try:
         # Check if the DNSRecord exists
-        existing_dnsr = dnsr.get(name=resource_name, namespace=namespace)
+        current_spec = dnsr.get(name=resource_name, namespace=namespace)
         logger.info(f"DNSRecord {resource_name} exists. Checking for updates...")
 
-        # Check if the DNSRecord is up-to-date
+        # Check if an update is needed
+        desired_spec_values = desired_spec["spec"]
+
         if (
-            existing_dnsr.spec.get("record") == desired_spec["spec"]["record"]
-            and existing_dnsr.spec.get("type") == desired_spec["spec"]["type"]
-            and existing_dnsr.spec.get("target") == desired_spec["spec"]["target"]
+            current_spec.get("record") == desired_spec_values["record"]
+            and current_spec.get("type") == desired_spec_values["type"]
+            and current_spec.get("target") == desired_spec_values["target"]
         ):
             logger.info(f"DNSRecord {resource_name} is up-to-date.")
-        else:
-            # Update the DNSRecord if necessary
-            logger.info(f"DNSRecord {resource_name} requires an update.")
-            patch = {"spec": desired_spec["spec"]}
-            dnsr.patch(
-                name=resource_name,
-                namespace=namespace,
-                body=patch,
-                content_type="application/merge-patch+json",
-            )
-            logger.info(f"DNSRecord {resource_name} updated.")
-        return
+            return True
+
+        # Update DNSRecord
+        logger.info(f"DNSRecord {resource_name} requires an update.")
+        dnsr.patch(
+            name=resource_name,
+            namespace=namespace,
+            body={"spec": desired_spec_values},
+            content_type="application/merge-patch+json",
+        )
+        logger.info(f"DNSRecord {resource_name} updated.")
+        return True
+
     except ApiException as e:
         if e.status == 404:
-            # Create the DNSRecord if it does not exist
-            logger.info(f"DNSRecord {resource_name} not found. Creating...")
+            # Create DNSRecord if it does not exist
+            logger.info(f"DNSRecord {resource_name} not found. Creating one...")
             try:
                 dnsr.create(
                     body=desired_spec,
@@ -69,15 +70,16 @@ async def sync_dns_record(dnsr, resource_name, namespace, desired_spec, logger):
                     content_type="application/json",
                 )
                 logger.info(f"DNSRecord {resource_name} created.")
-            except Exception as e:
-                raise kopf.TemporaryError(f"Error creating DNSRecord {resource_name}: {e}", delay=10)
+                return True
+            except Exception as create_error:
+                raise kopf.TemporaryError(
+                    f"Error creating DNSRecord {resource_name}: {create_error}",
+                    delay=10,
+                )
         else:
-            # Log any other errors
-            logger.error(
-                f"Error handling DNSRecord {resource_name}: {e.reason} - {e.body}"
-                
-            )
-            raise kopf.TemporaryError(f"Error handling DNSRecord {resource_name}: {e.reason} - {e.body}", delay=10)
+            # Handle other API exceptions
+            logger.error(f"Error handling DNSRecord {resource_name}: {e.reason} - {e.body}")
+            raise kopf.TemporaryError(f"Error handling DNSRecord {resource_name}: {e.reason} - {e.body}",delay=10)
     return False
 
 
@@ -93,25 +95,33 @@ async def ingress_deleted(body, logger, **kwargs):
 @kopf.on.update(kind="Ingress", annotations={f"nsupdate-operator": kopf.PRESENT})
 @kopf.on.resume(kind="Ingress", annotations={f"nsupdate-operator": kopf.PRESENT})
 async def ingress_matched(body, logger, **kwargs):
-
     ingress = await Ingress(body)
     dyn_client = DynamicClient(kubernetes.client.ApiClient())
     dnsr = dyn_client.resources.get(api_version=DNS_RECORD_API_VERSION, kind=DNS_RECORD_KIND)
 
-    target=""
-    record_type=""
-    for standard in standards:
-        if standard["key"] == ingress.annotations[f"nsupdate-operator"]:
-            target=standard["target"] 
-            record_type=standard["type"] 
+    # Find standard set from configuration
+    target, record_type = next(
+        ((standard["target"], standard["type"]) for standard in standards 
+         if standard["key"] == ingress.annotations.get("nsupdate-operator")),
+        (None, None)
+    )
 
-    if target == "" or record_type=="":
-        raise kopf.PermanentError(f"No standard founds for {ingress.metadata.name} ingress")
-        return
-    
+    if not target or not record_type:
+        raise kopf.PermanentError(f"No valid standards found for {ingress.metadata.name} ingress")
+
+    # Process DNSRecords for each host in the ingress rules
+    ingress_namespace = ingress.metadata.namespace
+    ingress_name = ingress.metadata.name
+
     for rule in ingress.spec.rules:
-        resource_name = f"{ingress.metadata.name}--{rule.host}"
-        desired_dnsr = create_dns_record_spec(resource_name, ingress.metadata.namespace, rule.host, target, record_type)
+        resource_name = f"{ingress_name}--{rule.host}"
+        desired_dnsr = create_dns_record_spec(
+            resource_name,
+            ingress_namespace,
+            rule.host,
+            target,
+            record_type
+        )
         kopf.adopt(desired_dnsr)
         logger.info(f"Processing DNSRecord: {resource_name}")
-        await sync_dns_record(dnsr, resource_name, ingress.metadata.namespace, desired_dnsr, logger)
+        await sync_dns_record(dnsr, resource_name, ingress_namespace, desired_dnsr, logger)
