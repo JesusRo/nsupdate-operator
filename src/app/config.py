@@ -47,4 +47,4 @@ except ApiException as e:
         logging.error(f"Error handling configuration {configmap_name}: {e.reason} - {e.body}")
 except e:
     logging.error(f"Fatal error handling configuration: {e}")
-    exit
+    
