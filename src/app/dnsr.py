@@ -86,7 +86,7 @@ class DnsRecord:
             response = resolver.resolve(self.record.rstrip("."), record_type)
             return str(response[0])
         except Exception as e:
-            self.logger.warning(f"Error resolving {self.record.rstrip(".")}: {e}")
+            self.logger.warning(f"Error resolving {self.record.rstrip('.')}: {e}")
             return False
 
     def owned(self) -> bool:
@@ -98,7 +98,7 @@ class DnsRecord:
             response = resolver.resolve("owner_"+self.record.rstrip("."), Records.TXT)
             return str(response[0] == OWNMARK)
         except Exception as e:
-            self.logger.warning(f"Error resolving TXT for {self.record.rstrip(".")}: {e}")
+            self.logger.warning(f"Error resolving TXT for {self.record.rstrip('.')}: {e}")
             return False
 
     def synced(self) -> bool:
