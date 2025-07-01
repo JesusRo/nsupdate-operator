@@ -1,4 +1,4 @@
-FROM python:3.13.1-alpine AS base
+FROM python:3.13.5-alpine AS base
 RUN mkdir /app
 WORKDIR /app
 COPY requirements.txt /requirements.txt
